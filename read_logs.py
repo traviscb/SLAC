@@ -84,7 +84,7 @@ def dates_pass(rid, date):
 def print_rec_ids(rec_ids,offset=365):
 
 
-   print "Rec ID, Clicks,date, arXiv, Citations(6mo), Citations(1yr):"
+   print "Rec ID, Clicks,date, arXiv, Citations(1yr), Citations(6mo):"
    output = []
    for key in rec_ids:
       dates = get_fieldvalues(key, '269__c')
@@ -93,21 +93,28 @@ def print_rec_ids(rec_ids,offset=365):
       reps = get_fieldvalues(key, '037__a')
       if len(reps) > 0:
          rep = reps[0]
-         
       output.append([key, rec_ids[key], date, rep])
    date1=''
    output.sort(key = lambda record:record[2])
    for record in output:
       if record[2] != date1:
          date = datetime.date(int(record[2].rsplit('-')[0]),int(record[2].rsplit('-')[1]),1)
-         date1 = date.strftime("%Y-%m")
          date2 = date + datetime.timedelta(offset/2)
-         date2 = date2.strftime("%Y-%m")
          date3 = date + datetime.timedelta(offset)
+         ## check and split across yearsdue to search bug.   assumes that
+         ## if small offset splits the year, the big one does too (i.e. we
+         ## don't go back or forward more than 6 mos
+         if date.year != date2.year:
+            join = str(date.year) +'-12-31 or year:' + str(date2.year) + '-01-01->'
+         else:
+            join = ''
+         date1 = date.strftime("%Y-%m")
+         date2 = date2.strftime("%Y-%m")
          date3 = date3.strftime("%Y-%m")
+
          print date1, date2, date3
-         complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->'+date2))
-         half_complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->'+date3))
+         complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->' + join + date2))
+         half_complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->' + join + date3))
       paper_citation_list = intbitset(get_cited_by(record[0]))
       narrowed_citation_count = len(paper_citation_list & complete_paper_list)
       half_narrowed_citation_count = len(paper_citation_list & half_complete_paper_list)
@@ -120,7 +127,7 @@ def main():
    logs_dir = "/home/tcb/logs/"
 
    datestart = datetime.date(2009,1,1)
-   names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+   names = ["Null","Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
 
    for month in range(1,7):
 
