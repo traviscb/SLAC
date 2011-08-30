@@ -51,7 +51,7 @@ def print_data(final_dict):
 def main(args):
 
    final_dict = {}
-   
+
    for file in args:
       final_dict = count_cites(file, final_dict)
 

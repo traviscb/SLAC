@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
 from invenio.search_engine import perform_request_search
-from invenio.bibrank_citation_searcher import get_cited_by_count
-from invenio.intbitset import intbitset
+#from invenio.bibrank_citation_searcher import get_cited_by_count
+#from invenio.intbitset import intbitset
 import sys
 import re
 import datetime
 import glob
 from urllib import unquote_plus
-from invenio.bibrank_citation_searcher import get_cited_by
+#from invenio.bibrank_citation_searcher import get_cited_by
 from invenio.search_engine import get_fieldvalues
 
 
 verbose = True
-verbose = False
+#verbose = False
 
 
 #regex is a dictionary holding all the possible regular expressions that can be taken from
@@ -184,11 +184,12 @@ def arx_deref(rec_ids, arx_ids, date):
                rec_ids[search_results[0]] += count
                if verbose:
                   print arxid + "+1 "
+      else:
+         print arxid + " not found"
    return rec_ids
 
 def url_count(url_line, rec_ids, date):
    pattern_found = False
-
    for pattern in regex:
       result = pattern.search(url_line)
       if result and pattern_found == False:
@@ -221,7 +222,7 @@ def dates_pass(rid, date):
 def print_rec_ids(rec_ids,offset=365):
 
 
-   print "Rec ID, Clicks,date, arXiv, Citations(1yr), Citations(6mo):"
+   print "Rec ID, Clicks,date, arXiv, category"
    output = []
    for key in rec_ids:
       dates = get_fieldvalues(key, '269__c')
@@ -237,29 +238,42 @@ def print_rec_ids(rec_ids,offset=365):
    date1=''
    output.sort(key = lambda record:record[2])
    for record in output:
-      if record[2] != date1:
-         date = datetime.date(int(record[2].rsplit('-')[0]),int(record[2].rsplit('-')[1]),1)
-         date2 = date + datetime.timedelta(offset/2)
-         date3 = date + datetime.timedelta(offset)
+#      if record[2] != date1:
+#         date = datetime.date(int(record[2].rsplit('-')[0]),int(record[2].rsplit('-')[1]),1)
+#         date2 = date + datetime.timedelta(offset/2)
+#         date3 = date + datetime.timedelta(offset)
+#         date4 = date + datetime.timedelta(offset*2)
          ## check and split across yearsdue to search bug.   assumes that
          ## if small offset splits the year, the big one does too (i.e. we
          ## don't go back or forward more than 6 mos
-         if date.year != date2.year:
-            join = str(date.year) +'-12-31 or year:' + str(date2.year) + '-01-01->'
-         else:
-            join = ''
-         date1 = date.strftime("%Y-%m")
-         date2 = date2.strftime("%Y-%m")
-         date3 = date3.strftime("%Y-%m")
+#         if date.year != date2.year:
+#            join = str(date.year) +'-12-31 or year:' + str(date2.year) + '-01-01->'
+#         else:
+#            join = ''
+#         date1 = date.strftime("%Y-%m")
+#         date2 = date2.strftime("%Y-%m")
+#         date3 = date3.strftime("%Y-%m")
 
-         print date1, date2, date3
-         complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->' + join + date2))
-         half_complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->' + join + date3))
-      paper_citation_list = intbitset(get_cited_by(record[0]))
-      narrowed_citation_count = len(paper_citation_list & complete_paper_list)
-      half_narrowed_citation_count = len(paper_citation_list & half_complete_paper_list)
+ #        print date1, date2, date3
+  #       complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->' + join + date2))
+ #        half_complete_paper_list = intbitset(perform_request_search(p='year:'+date1+'->' + join + date3))
+#      paper_citation_list = intbitset(get_cited_by(record[0]))
+#      narrowed_citation_count = len(paper_citation_list & complete_paper_list)
+#      half_narrowed_citation_count = len(paper_citation_list & half_complete_paper_list)
 
-      print '%d,%d,%s,%s,%s,%d,%d' % (record[0],record[1],record[2],record[3],record[4], half_narrowed_citation_count,narrowed_citation_count)
+      print '%d,%d,%s,%s' % (record[0],record[1],record[2],record[3],record[4])
+
+def print_arx_ids(rec_ids,offset=365):
+
+
+   print "Rec ID, Clicks,date, arXiv, Citations(1yr), Citations(6mo), Citations(2yr):"
+   output = []
+   for key in rec_ids:
+      output.append([key, rec_ids[key], date, rep, cat])
+   output.sort(key = lambda record:record[2])
+   for record in output:
+      print '%d,%d,%s,%s' % (record[0],record[1],record[2],record[3])
+
 
 def main():
    rec_ids = {}
@@ -269,7 +283,7 @@ def main():
    datestart = datetime.date(2009,1,1)
    names = ["Null","Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
 
-   for month in range(1,7):
+   for month in range(1,6):
 
       date = datestart.replace(month=month)
       fileglob = logs_dir + "spiface.??-" + names[month] + "-2009.log"
@@ -286,9 +300,11 @@ def main():
       if len(arx_ids) > 0:
          if verbose:
             print "dereferencing arx IDs from "+ filename
-         rec_ids = arx_deref(rec_ids, arx_ids, date)
+#         rec_ids = arx_deref(rec_ids, arx_ids, date)
 
-   print_rec_ids(rec_ids)
+
+
+#   print_rec_ids(rec_ids)
 
 
 if __name__ == "__main__":
